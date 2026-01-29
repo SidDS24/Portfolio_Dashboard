@@ -607,16 +607,15 @@
             }
         }
 
-        // Global UI Selectors
+        // Global UI Selectors (CLEAN & UNIFIED)
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const fileList = document.getElementById('file-list');
         const processBtn = document.getElementById('process-btn');
         const dbCount = document.getElementById('db-count');
         const industryFilter = document.getElementById('industry-filter');
+        const rankingBody = document.getElementById('ranking-body'); 
         const runQuantBtn = document.getElementById('run-quant-btn');
-
-        // Portfolio Creator Logic Selectors
         const totalCapitalInput = document.getElementById('total-capital');
         const portfolioSlider = document.getElementById('portfolio-count-slider');
         const portfolioCountDisplay = document.getElementById('portfolio-count-display');
@@ -627,24 +626,17 @@
         const modeIndividualBtn = document.getElementById('mode-individual-btn');
         const totalCapCont = document.getElementById('total-capital-container');
 
-        let isBackendOnline = false;
-        let isAnalyzingPortfolio = false;
-        let failCount = 0;
-        let selectedFiles = [];
-        let portfolioConfigs = []; // Array of { id, allocation, capitalAmount, selectedAssets, customWeights }
-        let allocationMode = 'split'; // 'split' or 'individual'
-
-        // Check every 5 seconds
-        setInterval(checkBackendStatus, 5000);
-        checkBackendStatus();
-
-        // Tab Logic
+        // Tab Selectors
         const tabRankings = document.getElementById('tab-rankings');
         const tabQuant = document.getElementById('tab-quant');
         const tabPortfolio = document.getElementById('tab-portfolio');
         const viewRankings = document.getElementById('rankings-view');
         const viewQuant = document.getElementById('quant-view');
         const viewPortfolio = document.getElementById('portfolio-view');
+
+        // Check every 5 seconds
+        setInterval(checkBackendStatus, 5000);
+        checkBackendStatus();
 
         tabRankings.onclick = () => {
             tabRankings.className = "text-xs font-bold uppercase tracking-widest text-cyan-400 border-b-2 border-cyan-400 pb-1";
@@ -1894,5 +1886,6 @@
         };
     </script>
 </body>
+
 
 </html>
