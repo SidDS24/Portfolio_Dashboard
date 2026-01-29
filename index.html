@@ -1,0 +1,1884 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Dashboard | Step 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top left, #0f172a, #020617);
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glow-cyan {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 242, 254, 0.5);
+        }
+
+        /* White Calendar Icon */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
+        /* Custom Dropdown Styles */
+        .dropdown-container {
+            position: relative;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            margin-top: 4px;
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        /* Prevent parent clipping and handle stacking */
+        .glass:focus-within,
+        .glass.active-card {
+            z-index: 100;
+            position: relative;
+        }
+
+        .dropdown-list.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .dropdown-item.selected {
+            background: rgba(6, 182, 212, 0.1);
+            color: #22d3ee;
+        }
+
+        .dropdown-search {
+            position: sticky;
+            top: 0;
+            background: #0f172a;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            z-index: 10;
+        }
+
+        /* Selection Tags */
+        .selection-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            min-height: 24px;
+        }
+
+        .selection-tag {
+            background: rgba(6, 182, 212, 0.15);
+            color: #22d3ee;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 6px;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .selection-tag:hover {
+            background: rgba(6, 182, 212, 0.25);
+            border-color: rgba(6, 182, 212, 0.5);
+        }
+
+        .selection-tag .remove-tag {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.2);
+            font-size: 8px;
+            font-weight: 900;
+        }
+
+        .selection-tag .remove-tag:hover {
+            background: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+
+<body class="p-6">
+
+    <!-- Header Section -->
+    <header class="max-w-[1600px] mx-auto mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
+                Data Processor
+            </h1>
+            <div class="flex gap-4 mt-2">
+                <button id="tab-rankings"
+                    class="text-xs font-bold uppercase tracking-widest text-cyan-400 border-b-2 border-cyan-400 pb-1">1.
+                    Company Rankings</button>
+                <button id="tab-quant"
+                    class="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-all pb-1 mr-4">2.
+                    Quant Analysis</button>
+                <button id="tab-portfolio"
+                    class="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-all pb-1">3.
+                    Portfolio Creator</button>
+            </div>
+        </div>
+        <div id="backend-status"
+            class="glass px-5 py-1.5 rounded-full text-xs font-semibold border-red-500/30 border flex items-center gap-2 text-slate-400 transition-all duration-500">
+            <span id="status-dot" class="w-2 h-2 bg-red-500 rounded-full"></span>
+            <span id="status-text">Backend Offline</span>
+        </div>
+    </header>
+
+    <main class="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        <!-- Sidebar / Upload Zone -->
+        <aside class="lg:col-span-1 space-y-6">
+            <div class="glass p-6 rounded-2xl glow-cyan">
+                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    Source Data
+                </h2>
+
+                <div id="drop-zone"
+                    class="border-2 border-dashed border-slate-700 rounded-xl p-6 text-center hover:border-cyan-500 transition-all cursor-pointer group bg-black/20">
+                    <input type="file" id="file-input" multiple class="hidden">
+                    <div class="space-y-2">
+                        <div
+                            class="bg-cyan-500/10 w-10 h-10 rounded-full flex items-center justify-center mx-auto transition-transform group-hover:scale-110">
+                            <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                        </div>
+                        <p class="text-sm text-slate-300 font-medium">Upload Screener CSVs</p>
+                    </div>
+                </div>
+
+                <div id="file-list" class="mt-4 space-y-2 max-h-32 overflow-y-auto pr-1">
+                    <!-- Files will appear here -->
+                </div>
+
+                <button id="process-btn"
+                    class="w-full mt-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-lg text-sm font-bold hover:brightness-110 active:scale-95 transition-all opacity-50 cursor-not-allowed"
+                    disabled>
+                    GENERATE RANKINGS
+                </button>
+            </div>
+
+            <!-- Stats Module -->
+            <div class="glass p-5 rounded-2xl border-l-4 border-cyan-500">
+                <p class="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Active Database</p>
+                <div class="flex justify-between items-end mt-1">
+                    <p class="text-2xl font-bold"><span id="db-count">0</span> <span
+                            class="text-xs text-slate-500 font-normal">Stocks</span></p>
+                    <p class="text-cyan-400 text-xs text-right">Live Feed</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Results Matrix (Tab 1) -->
+        <section id="rankings-view" class="lg:col-span-3">
+            <div class="glass p-6 rounded-3xl h-full flex flex-col min-h-[700px]">
+                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-4">
+                    <h2 class="text-xl font-semibold flex items-center gap-2">
+                        <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Company Ranking Analysis
+                    </h2>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <!-- Industry Filter -->
+                        <div class="flex items-center gap-2 mr-4">
+                            <span
+                                class="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Industry:</span>
+                            <select id="industry-filter"
+                                class="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-[11px] font-bold text-slate-200 focus:outline-none focus:border-cyan-500/50 transition-all cursor-pointer">
+                                <option value="all">Search All Industries</option>
+                            </select>
+                        </div>
+
+                        <!-- Cap Filters -->
+                        <div class="flex flex-wrap gap-1 glass p-1 rounded-xl bg-black/20">
+                            <button
+                                class="filter-btn active px-4 py-1.5 rounded-lg bg-cyan-500 text-[11px] font-bold transition-all shadow-lg shadow-cyan-500/20">All</button>
+                            <button
+                                class="filter-btn px-4 py-1.5 rounded-lg hover:bg-white/5 text-[11px] text-slate-400 font-medium transition-all">Large
+                                Cap</button>
+                            <button
+                                class="filter-btn px-4 py-1.5 rounded-lg hover:bg-white/5 text-[11px] text-slate-400 font-medium transition-all">Mid
+                                Cap</button>
+                            <button
+                                class="filter-btn px-4 py-1.5 rounded-lg hover:bg-white/5 text-[11px] text-slate-400 font-medium transition-all">Small
+                                Cap</button>
+                            <button
+                                class="filter-btn px-4 py-1.5 rounded-lg hover:bg-white/5 text-[11px] text-slate-400 font-medium transition-all">Micro
+                                Cap</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-grow overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr
+                                class="text-slate-200 text-[11px] uppercase font-bold tracking-wider border-b border-white/10">
+                                <th class="pb-4 pl-4">Rank</th>
+                                <th class="pb-4">Company Name</th>
+                                <th class="pb-4">Code</th>
+                                <th class="pb-4">Industry Group</th>
+                                <th class="pb-4 text-right">Price</th>
+                                <th class="pb-4 text-right">ROE %</th>
+                                <th class="pb-4 text-right">ROCE %</th>
+                                <th class="pb-4 pr-4 text-right">Market Cap (Cr)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ranking-body" class="divide-y divide-white/[0.03]">
+                            <tr>
+                                <td colspan="8" class="py-40 text-center italic text-slate-500">
+                                    <div class="flex flex-col items-center gap-2">
+                                        <svg class="w-12 h-12 text-slate-800" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                        </svg>
+                                        Waiting for source CSV files...
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-6 pt-5 border-t border-white/5 flex justify-between items-center text-[13px]">
+                    <p class="text-slate-500">Analysis displaying <span class="text-slate-200 font-bold">50</span>
+                        results per page</p>
+                    <div class="flex gap-2" id="pagination-btns"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Portfolio Creator (Tab 3) -->
+        <section id="portfolio-view" class="lg:col-span-3 hidden">
+            <div class="glass p-8 rounded-3xl h-full flex flex-col min-h-[700px]">
+                <div class="mb-8 border-b border-white/5 pb-6">
+                    <h2 class="text-2xl font-bold flex items-center gap-3">
+                        <svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        Portfolio Creator Engine
+                    </h2>
+                    <p class="text-slate-500 mt-1">Design and optimize multiple portfolios with smart capital
+                        allocation.</p>
+                </div>
+
+                <!-- Global Portfolio Config -->
+                <!-- Allocation Mode Toggle -->
+                <div class="flex items-center justify-between mb-6 p-1.5 glass rounded-2xl w-fit mx-auto md:mx-0">
+                    <button id="mode-split-btn"
+                        class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-cyan-500 text-white shadow-lg shadow-cyan-500/20">
+                        Total Split (%)
+                    </button>
+                    <button id="mode-individual-btn"
+                        class="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-slate-500 hover:text-slate-300">
+                        Individual (₹)
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 pb-8 border-b border-white/5">
+                    <div class="space-y-3" id="total-capital-container">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Total Trading
+                            Capital (₹)</label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <span class="text-cyan-400 font-bold">₹</span>
+                            </div>
+                            <input type="number" id="total-capital" value="100000"
+                                class="w-full bg-black/40 border border-white/10 rounded-2xl pl-10 pr-4 py-4 text-xl font-bold text-white focus:outline-none focus:border-cyan-500 transition-all group-hover:border-white/20">
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Number of
+                            Separate Portfolios</label>
+                        <div class="flex items-center gap-4">
+                            <input type="range" id="portfolio-count-slider" min="1" max="5" value="1"
+                                class="flex-grow accent-cyan-500">
+                            <span id="portfolio-count-display"
+                                class="w-12 h-12 glass rounded-xl flex items-center justify-center text-xl font-black text-cyan-400">1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strategic Portfolio Cards -->
+                <div id="portfolio-cards-container" class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-10">
+                    <!-- Dynamically generated cards go here -->
+                </div>
+
+                <div class="flex justify-center items-center gap-4 mb-12">
+                    <button id="run-portfolio-btn"
+                        class="px-12 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl font-black text-sm tracking-[0.2em] uppercase hover:brightness-110 active:scale-95 transition-all shadow-[0_0_30px_rgba(6,182,212,0.3)] flex items-center gap-3 group">
+                        <span>BUILD ALL PORTFOLIOS</span>
+                        <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                    </button>
+                    <button id="download-portfolio-excel"
+                        class="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center justify-center shrink-0 group"
+                        title="Download Excel Results">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Analysis Results Section -->
+                <div id="portfolio-results-section" class="hidden space-y-12">
+                    <!-- Results injected here -->
+                </div>
+            </div>
+        </section>
+        <section id="quant-view" class="lg:col-span-3 hidden">
+            <div class="glass p-8 rounded-3xl h-full flex flex-col min-h-[700px]">
+                <div class="mb-8 border-b border-white/5 pb-6">
+                    <h2 class="text-2xl font-bold flex items-center gap-3">
+                        <svg class="w-8 h-8 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        Batch Quantitative Engine
+                    </h2>
+                    <p class="text-slate-500 mt-1">Analyze multiple sectors or individual stocks against several
+                        benchmarks simultaneously.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <!-- Benchmark Selection -->
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Benchmarks
+                            (Multi)</label>
+                        <div class="dropdown-container" id="benchmark-dropdown">
+                            <button id="benchmark-trigger" data-placeholder="Select Benchmarks"
+                                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:border-cyan-500 transition-all flex justify-between items-center">
+                                <div class="selection-tags truncate"><span class="text-slate-500">Select
+                                        Benchmarks</span></div>
+                                <svg class="w-4 h-4 text-slate-500 shrink-0 ml-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                            <div class="dropdown-list custom-scrollbar px-2 pb-2">
+                                <div class="dropdown-search">
+                                    <input type="text" placeholder="Search indices..."
+                                        class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] text-white focus:outline-none focus:border-cyan-500">
+                                </div>
+                                <div id="benchmark-items"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sector Selector (Multi) -->
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Pick by
+                            Sector (Multi)</label>
+                        <div class="dropdown-container" id="sector-dropdown">
+                            <button id="sector-trigger" data-placeholder="Select Sectors"
+                                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-cyan-400 focus:outline-none focus:border-cyan-500 transition-all flex justify-between items-center">
+                                <div class="selection-tags truncate"><span class="text-slate-500">Select Sectors</span>
+                                </div>
+                                <svg class="w-4 h-4 text-slate-500 shrink-0 ml-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                            <div class="dropdown-list custom-scrollbar px-2 pb-2">
+                                <div class="dropdown-search">
+                                    <input type="text" placeholder="Search sectors..."
+                                        class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] text-white focus:outline-none focus:border-cyan-500">
+                                </div>
+                                <div id="sector-items"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Asset Selection -->
+                    <div class="space-y-2 md:col-span-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Primary
+                            Assets (Multi)</label>
+                        <div class="dropdown-container" id="asset-dropdown">
+                            <button id="asset-trigger" data-placeholder="Select Assets"
+                                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white focus:outline-none focus:border-cyan-500 transition-all flex justify-between items-center">
+                                <div class="selection-tags truncate"><span class="text-slate-500">Select Assets</span>
+                                </div>
+                                <svg class="w-4 h-4 text-slate-500 shrink-0 ml-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                            <div class="dropdown-list custom-scrollbar px-2 pb-2">
+                                <div class="dropdown-search">
+                                    <input type="text" placeholder="Search stocks..."
+                                        class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] text-white focus:outline-none focus:border-cyan-500">
+                                </div>
+                                <div id="asset-items"></div>
+                            </div>
+                        </div>
+                        <p class="text-[9px] text-slate-600 pl-1 italic">Sectors filter this list automatically</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 items-end">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Start
+                            Date</label>
+                        <input type="date" id="start-date"
+                            class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">End
+                            Date</label>
+                        <input type="date" id="end-date"
+                            class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 transition-all">
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="run-quant-btn"
+                            class="flex-grow py-3 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-xl font-bold text-sm tracking-widest uppercase hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-cyan-500/20">
+                            Run Batch Analysis
+                        </button>
+                        <button id="download-quant-excel"
+                            class="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center justify-center shrink-0 group"
+                            title="Download Excel">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Analysis Table Results -->
+                <div id="quant-results-container" class="hidden flex-grow flex flex-col">
+                    <div class="overflow-x-auto rounded-2xl border border-white/5 bg-black/20">
+                        <table class="w-full text-left text-sm">
+                            <thead id="quant-thead">
+                                <!-- Dynamically generated -->
+                            </thead>
+                            <tbody id="quant-results-body" class="divide-y divide-white/[0.03]">
+                                <!-- Injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // API CONFIGURATION
+        // REPLACE THIS with your hosted backend URL when you deploy (e.g., https://your-backend.render.com)
+        const PRODUCTION_API_URL = "https://portfolio-dashboard-meiw.onrender.com";
+        const LOCAL_API_URL = "http://127.0.0.1:8000";
+
+        const API_BASE_URL = (PRODUCTION_API_URL && window.location.protocol !== 'file:')
+            ? PRODUCTION_API_URL
+            : LOCAL_API_URL;
+
+        console.log("Using API Base URL:", API_BASE_URL);
+
+        async function checkBackendStatus() {
+            if (isAnalyzingPortfolio) return; // Don't flip status while we know server is busy
+
+            const statusBox = document.getElementById('backend-status');
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+
+            const urls = [API_BASE_URL + '/health'];
+            if (API_BASE_URL !== LOCAL_API_URL) urls.push(LOCAL_API_URL + '/health');
+
+            let success = false;
+
+            for (let url of urls) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
+                    const res = await fetch(url, { mode: 'cors', signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (res.ok) {
+                        success = true;
+                        break;
+                    }
+                } catch (e) { }
+            }
+
+            if (success) {
+                failCount = 0;
+                if (!isBackendOnline) {
+                    isBackendOnline = true;
+                    statusBox.classList.remove('border-red-500/30', 'text-slate-400', 'border-dashed');
+                    statusBox.classList.add('border-cyan-500/30', 'text-cyan-400', 'glow-cyan');
+                    statusDot.classList.remove('bg-red-500');
+                    statusDot.classList.add('bg-cyan-400', 'animate-pulse');
+                    statusText.textContent = 'Backend Online';
+                }
+            } else {
+                failCount++;
+                if (failCount >= 3 && isBackendOnline) { // Only show offline after 3 fails
+                    isBackendOnline = false;
+                    statusBox.classList.add('border-red-500/30', 'text-slate-400', 'border-dashed');
+                    statusBox.classList.remove('border-cyan-500/30', 'text-cyan-400', 'glow-cyan');
+                    statusDot.classList.add('bg-red-500');
+                    statusDot.classList.remove('bg-cyan-400', 'animate-pulse');
+                    statusText.innerHTML = 'Backend Offline - <span class="text-white">Run LAUNCH_DASHBOARD.bat</span>';
+                }
+            }
+        }
+
+        // Check every 5 seconds
+        setInterval(checkBackendStatus, 5000);
+        checkBackendStatus();
+
+        // Tab Logic
+        const tabRankings = document.getElementById('tab-rankings');
+        const tabQuant = document.getElementById('tab-quant');
+        const tabPortfolio = document.getElementById('tab-portfolio');
+        const viewRankings = document.getElementById('rankings-view');
+        const viewQuant = document.getElementById('quant-view');
+        const viewPortfolio = document.getElementById('portfolio-view');
+
+        tabRankings.onclick = () => {
+            tabRankings.className = "text-xs font-bold uppercase tracking-widest text-cyan-400 border-b-2 border-cyan-400 pb-1";
+            tabQuant.className = "text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-all pb-1 mr-4";
+            tabPortfolio.className = "text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-all pb-1 mr-4";
+            viewRankings.classList.remove('hidden');
+            viewQuant.classList.add('hidden');
+            viewPortfolio.classList.add('hidden');
+            document.querySelector('aside').classList.remove('hidden');
+            document.querySelector('main').classList.remove('lg:grid-cols-1');
+            document.querySelector('main').classList.add('lg:grid-cols-4');
+            viewRankings.classList.remove('lg:col-span-4');
+            viewRankings.classList.add('lg:col-span-3');
+        };
+
+        tabQuant.onclick = () => {
+            tabQuant.className = "text-xs font-bold uppercase tracking-widest text-cyan-400 border-b-2 border-cyan-400 pb-1 mr-4";
+            tabRankings.className = "text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-all pb-1 mr-4";
+            tabPortfolio.className = "text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-all pb-1 mr-4";
+            viewQuant.classList.remove('hidden');
+            viewRankings.classList.add('hidden');
+            viewPortfolio.classList.add('hidden');
+            document.querySelector('aside').classList.add('hidden');
+            document.querySelector('main').classList.remove('lg:grid-cols-4');
+            document.querySelector('main').classList.add('lg:grid-cols-1');
+            viewQuant.classList.remove('lg:col-span-3');
+            viewQuant.classList.add('lg:col-span-1');
+            loadMappings();
+        };
+
+        tabPortfolio.onclick = () => {
+            tabPortfolio.className = "text-xs font-bold uppercase tracking-widest text-cyan-400 border-b-2 border-cyan-400 pb-1";
+            tabRankings.className = "text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-all pb-1 mr-4";
+            tabQuant.className = "text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-slate-300 transition-all pb-1 mr-4";
+            viewPortfolio.classList.remove('hidden');
+            viewRankings.classList.add('hidden');
+            viewQuant.classList.add('hidden');
+            document.querySelector('aside').classList.add('hidden');
+            document.querySelector('main').classList.remove('lg:grid-cols-4');
+            document.querySelector('main').classList.add('lg:grid-cols-1');
+            viewPortfolio.classList.remove('lg:col-span-3');
+            viewPortfolio.classList.add('lg:col-span-1');
+            syncAssetsToPortfolio();
+            initPortfolioCreator();
+        };
+
+        const sectorBatchSelect = document.getElementById('sector-batch-select');
+        const quantBody = document.getElementById('quant-results-body');
+        const quantContainer = document.getElementById('quant-results-container');
+
+        let mappingsData = null;
+        let selectedBenchmarks = new Set();
+        let selectedAssets = new Set();
+        window.selectedAssets = selectedAssets; // Make explicit for sync logic
+        let selectedSectors = new Set();
+
+        // Custom Dropdown UI Handler
+        function setupDropdown(id, triggerId, itemsId, selectionSet) {
+            const dropdown = document.getElementById(id);
+            const trigger = document.getElementById(triggerId);
+            const list = dropdown.querySelector('.dropdown-list');
+            const searchInput = dropdown.querySelector('input');
+
+            const renderTags = () => {
+                const tagCont = trigger.querySelector('.selection-tags');
+                if (!tagCont) return;
+
+                tagCont.innerHTML = '';
+                if (selectionSet.size === 0) {
+                    const placeholder = trigger.getAttribute('data-placeholder') || 'Select Items';
+                    tagCont.innerHTML = `<span class="text-slate-500">${placeholder}</span>`;
+                } else {
+                    selectionSet.forEach(val => {
+                        const tag = document.createElement('div');
+                        tag.className = 'selection-tag';
+                        // Get display name if ticker (handles .NS mapping)
+                        let display = val;
+                        if (mappingsData) {
+                            if (mappingsData.broad_index_map[val]) display = mappingsData.broad_index_map[val];
+                            else if (mappingsData.sector_index_map[val]) display = mappingsData.sector_index_map[val];
+                            // For stocks, it might be Ticker.NS, we find it in screener data or mappings if added
+                        }
+
+                        tag.innerHTML = `
+                            <span>${display}</span>
+                            <span class="remove-tag" onclick="event.stopPropagation(); removeTagItem('${id}', '${val}')">×</span>
+                        `;
+                        tagCont.appendChild(tag);
+                    });
+                }
+            };
+
+            // Global removal helper
+            window.removeTagItem = (id, val) => {
+                if (id === 'benchmark-dropdown') {
+                    selectedBenchmarks.delete(val);
+                    benchmarkUI.refresh();
+                    renderBenchmarkItems();
+                } else if (id === 'sector-dropdown') {
+                    selectedSectors.delete(val);
+                    sectorUI.refresh();
+                    renderSectorItems();
+                    renderAssetItems();
+                } else if (id === 'asset-dropdown') {
+                    selectedAssets.delete(val);
+                    assetUI.refresh();
+                    renderAssetItems();
+                }
+            };
+
+            trigger.onclick = (e) => {
+                e.stopPropagation();
+                const isShowing = list.classList.contains('show');
+                closeAllDropdowns();
+                if (!isShowing) list.classList.add('show');
+            };
+
+            searchInput.onclick = (e) => e.stopPropagation();
+            searchInput.oninput = () => {
+                const term = searchInput.value.toLowerCase();
+                const items = list.querySelectorAll('.dropdown-item');
+                items.forEach(item => {
+                    const txt = item.textContent.toLowerCase();
+                    item.style.display = txt.includes(term) ? 'flex' : 'none';
+                });
+            };
+
+            return {
+                open: () => list.classList.add('show'),
+                close: () => list.classList.remove('show'),
+                refresh: () => renderTags()
+            };
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.dropdown-list').forEach(l => l.classList.remove('show'));
+        }
+
+        window.onclick = () => closeAllDropdowns();
+
+        const benchmarkUI = setupDropdown('benchmark-dropdown', 'benchmark-trigger', 'benchmark-items', selectedBenchmarks);
+        const sectorUI = setupDropdown('sector-dropdown', 'sector-trigger', 'sector-items', selectedSectors);
+        const assetUI = setupDropdown('asset-dropdown', 'asset-trigger', 'asset-items', selectedAssets);
+
+        async function loadMappings() {
+            if (mappingsData) return;
+            try {
+                const response = await fetch(API_BASE_URL + '/mappings');
+                mappingsData = await response.json();
+
+                renderBenchmarkItems();
+                renderSectorItems();
+                renderAssetItems();
+            } catch (e) {
+                console.error("Failed to load mappings", e);
+            }
+        }
+
+        function renderBenchmarkItems() {
+            const container = document.getElementById('benchmark-items');
+            container.innerHTML = '';
+
+            // Add Select All Button
+            const selectAll = document.createElement('div');
+            selectAll.className = 'dropdown-item font-bold text-cyan-400 border-b border-white/10 mb-1';
+            selectAll.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg> Select All Indices`;
+            selectAll.onclick = (e) => {
+                e.stopPropagation();
+                const allBroad = Object.keys(mappingsData.broad_index_map);
+                const allSectoral = Object.keys(mappingsData.sector_index_map);
+                const all = [...allBroad, ...allSectoral];
+
+                const allSelected = all.every(t => selectedBenchmarks.has(t));
+                if (allSelected) all.forEach(t => selectedBenchmarks.delete(t));
+                else all.forEach(t => selectedBenchmarks.add(t));
+
+                renderBenchmarkItems();
+                benchmarkUI.refresh();
+            };
+            container.appendChild(selectAll);
+
+            const addGroup = (label, data) => {
+                const header = document.createElement('div');
+                header.className = 'px-3 py-1.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-2';
+                header.textContent = label;
+                container.appendChild(header);
+                Object.entries(data).forEach(([ticker, name]) => {
+                    const item = document.createElement('div');
+                    item.className = `dropdown-item ${selectedBenchmarks.has(ticker) ? 'selected' : ''}`;
+                    item.innerHTML = `<input type="checkbox" ${selectedBenchmarks.has(ticker) ? 'checked' : ''} class="pointer-events-none"> <span>${name}</span>`;
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        if (selectedBenchmarks.has(ticker)) selectedBenchmarks.delete(ticker);
+                        else selectedBenchmarks.add(ticker);
+                        renderBenchmarkItems();
+                        benchmarkUI.refresh();
+                    };
+                    container.appendChild(item);
+                });
+            };
+
+            addGroup('Broad Market', mappingsData.broad_index_map);
+            addGroup('Sectoral', mappingsData.sector_index_map);
+        }
+
+        function renderSectorItems() {
+            const container = document.getElementById('sector-items');
+            container.innerHTML = '';
+
+            // Add Select All Button
+            const selectAll = document.createElement('div');
+            selectAll.className = 'dropdown-item font-bold text-cyan-400 border-b border-white/10 mb-1';
+            selectAll.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg> Select All Sectors`;
+            selectAll.onclick = (e) => {
+                e.stopPropagation();
+                const allSectors = Object.keys(mappingsData.sector_company_map);
+                const allSelected = allSectors.every(s => selectedSectors.has(s));
+                if (allSelected) allSectors.forEach(s => selectedSectors.delete(s));
+                else allSectors.forEach(s => selectedSectors.add(s));
+
+                selectedAssets.clear();
+                renderSectorItems();
+                renderAssetItems();
+                sectorUI.refresh();
+                assetUI.refresh();
+            };
+            container.appendChild(selectAll);
+
+            Object.keys(mappingsData.sector_company_map).sort().forEach(s => {
+                const item = document.createElement('div');
+                item.className = `dropdown-item ${selectedSectors.has(s) ? 'selected' : ''}`;
+                item.innerHTML = `<input type="checkbox" ${selectedSectors.has(s) ? 'checked' : ''} class="pointer-events-none"> <span>${s}</span>`;
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    if (selectedSectors.has(s)) selectedSectors.delete(s);
+                    else selectedSectors.add(s);
+                    selectedAssets.clear(); // Clear assets to re-filter
+                    renderSectorItems();
+                    renderAssetItems();
+                    sectorUI.refresh();
+                    assetUI.refresh();
+                };
+                container.appendChild(item);
+            });
+        }
+
+        function renderAssetItems() {
+            const container = document.getElementById('asset-items');
+            container.innerHTML = '';
+            let stocks = [];
+
+            Object.entries(mappingsData.sector_company_map).forEach(([sector, companies]) => {
+                if (selectedSectors.size > 0 && !selectedSectors.has(sector)) return;
+                Object.entries(companies).forEach(([ticker, name]) => {
+                    stocks.push({ ticker, name, sector });
+                });
+            });
+
+            if (stocks.length > 0) {
+                const selectAll = document.createElement('div');
+                selectAll.className = 'dropdown-item font-bold text-cyan-400 border-b border-white/10 mb-1';
+                const allSelected = stocks.every(s => selectedAssets.has(s.ticker));
+                selectAll.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg> ${allSelected ? 'Deselect All' : 'Select All Assets'}`;
+                selectAll.onclick = (e) => {
+                    e.stopPropagation();
+                    if (allSelected) stocks.forEach(s => selectedAssets.delete(s.ticker));
+                    else stocks.forEach(s => selectedAssets.add(s.ticker));
+                    renderAssetItems();
+                    assetUI.refresh();
+                };
+                container.appendChild(selectAll);
+
+                stocks.sort((a, b) => a.name.localeCompare(b.name)).forEach(s => {
+                    const item = document.createElement('div');
+                    item.className = `dropdown-item ${selectedAssets.has(s.ticker) ? 'selected' : ''}`;
+                    item.innerHTML = `
+                        <input type="checkbox" ${selectedAssets.has(s.ticker) ? 'checked' : ''} class="pointer-events-none">
+                        <div class="flex flex-col">
+                            <span class="font-bold">${s.name}</span>
+                            <span class="text-[9px] text-slate-500 uppercase">${s.sector}</span>
+                        </div>
+                    `;
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        if (selectedAssets.has(s.ticker)) selectedAssets.delete(s.ticker);
+                        else selectedAssets.add(s.ticker);
+                        renderAssetItems();
+                        assetUI.refresh();
+                    };
+                    container.appendChild(item);
+                });
+            }
+        }
+
+        dropZone.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => handleFiles(e.target.files);
+
+        function handleFiles(files) {
+            selectedFiles = [...files].filter(f => f.name.endsWith('.csv'));
+            updateUI();
+        }
+
+        function updateUI() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach(f => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between bg-white/5 px-3 py-2 rounded-lg text-[11px] border border-white/[0.02] animate-in fade-in slide-in-from-left-2 duration-300';
+                div.innerHTML = `<span class="truncate pr-3 text-slate-300 font-medium">${f.name}</span><span class="text-cyan-500 font-mono">${(f.size / 1024).toFixed(0)}K</span>`;
+                fileList.appendChild(div);
+            });
+
+            if (selectedFiles.length > 0) {
+                processBtn.disabled = false;
+                processBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        processBtn.onclick = async () => {
+            processBtn.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" stroke-width="4"></path></svg> RUNNING ANALYTICS...</span>';
+            processBtn.disabled = true;
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+
+            try {
+                const response = await fetch(API_BASE_URL + '/rankings', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Backend server is not running');
+
+                const data = await response.json();
+                window.currentData = data;
+
+                dbCount.textContent = data.all.length.toLocaleString();
+                populateIndustries(data.all);
+
+                window.currentPage = 1;
+                displayData('all');
+
+                processBtn.innerHTML = 'ANALYSIS SYNCED ✅';
+                processBtn.classList.add('from-emerald-600', 'to-teal-600');
+            } catch (error) {
+                processBtn.innerHTML = 'SERVER OFFLINE ⚠️';
+                processBtn.classList.remove('from-cyan-600', 'to-blue-600');
+                processBtn.classList.add('from-red-600', 'to-rose-600');
+
+                const statusText = document.getElementById('status-text');
+                statusText.innerHTML = '<span class="text-rose-400 font-bold">START main.py TO FIX</span>';
+                setTimeout(() => {
+                    processBtn.disabled = false;
+                    processBtn.innerHTML = 'GENERATE RANKINGS';
+                    processBtn.classList.remove('from-red-600', 'to-rose-600');
+                    processBtn.classList.add('from-cyan-600', 'to-blue-600');
+                    checkBackendStatus();
+                }, 3000);
+            }
+        };
+
+        function populateIndustries(allStocks) {
+            const industries = [...new Set(allStocks.map(s => s['Industry Group'] || 'General'))].sort();
+            industryFilter.innerHTML = '<option value="all">Search All Industries</option>';
+            industries.forEach(ind => {
+                const opt = document.createElement('option');
+                opt.value = ind;
+                opt.textContent = ind;
+                industryFilter.appendChild(opt);
+            });
+        }
+
+        runQuantBtn.onclick = async () => {
+            const assets = Array.from(selectedAssets);
+            // Include core benchmarks automatically for the horizontal view
+            const indices = Array.from(new Set([...selectedBenchmarks, '^NSEI', '^CRSLDX', '^NSEBANK']));
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            if (assets.length === 0) {
+                alert("Please select at least one asset.");
+                return;
+            }
+
+            runQuantBtn.disabled = true;
+            runQuantBtn.innerHTML = 'PROCESSING...';
+
+            try {
+                const response = await fetch(API_BASE_URL + '/correlation/batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tickers: assets,
+                        index_tickers: indices,
+                        start_date: startDate || null,
+                        end_date: endDate || null
+                    })
+                });
+                const batchResults = await response.json();
+
+                if (batchResults.length === 0 || Object.keys(batchResults[0].benchmarks).length === 0) {
+                    throw new Error("No data found for the selected assets/dates.");
+                }
+
+                renderQuantTable(batchResults);
+                quantContainer.classList.remove('hidden');
+                runQuantBtn.innerHTML = 'Run Batch Analysis';
+                runQuantBtn.classList.add('from-cyan-600', 'to-blue-600');
+            } catch (e) {
+                runQuantBtn.innerHTML = e.message.includes("No data") ? 'NO DATA FOUND ⚠️' : 'SERVER ERROR ⚠️';
+                runQuantBtn.classList.remove('from-cyan-600', 'to-blue-600');
+                runQuantBtn.classList.add('from-red-600', 'to-rose-600');
+                setTimeout(() => {
+                    runQuantBtn.disabled = false;
+                    runQuantBtn.innerHTML = 'Run Batch Analysis';
+                    runQuantBtn.classList.remove('from-red-600', 'to-rose-600');
+                    runQuantBtn.classList.add('from-cyan-600', 'to-blue-600');
+                    checkBackendStatus();
+                }, 3000);
+            } finally {
+                runQuantBtn.disabled = false;
+            }
+        };
+
+        function renderQuantTable(results) {
+            const quantThead = document.getElementById('quant-thead');
+            quantBody.innerHTML = '';
+
+            // 1. Identify active benchmarks based on user selection
+            const activeBenchmarks = Array.from(selectedBenchmarks);
+            const benchmarkNames = {};
+            if (mappingsData) {
+                [...Object.entries(mappingsData.broad_index_map), ...Object.entries(mappingsData.sector_index_map)]
+                    .forEach(([t, n]) => benchmarkNames[t] = n);
+            }
+
+            // 2. Build Dynamic Header
+            let headerHtml = `
+                <tr class="text-white text-xs uppercase font-extrabold tracking-wider border-b border-white/20 bg-white/5">
+                    <th class="py-5 pl-6">Rank (#)</th>
+                    <th class="py-5">Company Name</th>
+                    <th class="py-5 text-center border-l border-white/10">Sum</th>
+                    <th class="py-5 text-center">Count</th>
+                    <th class="py-5 text-center">Mean</th>
+                    <th class="py-5 text-center">Var</th>
+                    <th class="py-5 text-center">Std Dev</th>`;
+
+            activeBenchmarks.forEach(ticker => {
+                const shortName = (benchmarkNames[ticker] || ticker).replace('Nifty ', 'N').replace('NIFTY ', 'N');
+                headerHtml += `
+                    <th class="py-5 text-center border-l border-white/10 text-emerald-400">${shortName} Corr</th>
+                    <th class="py-5 text-center text-cyan-400">${shortName} Beta</th>`;
+            });
+
+            headerHtml += `<th class="py-5 pr-6 pl-4 border-l border-white/10">Industry</th></tr>`;
+            quantThead.innerHTML = headerHtml;
+
+            // 3. Process Data
+            const rankMap = {};
+            const industryMap = {};
+
+            if (window.currentData && window.currentData.all) {
+                window.currentData.all.forEach(s => {
+                    const code = s['Nse Code'] ? s['Nse Code'] + ".NS" : "";
+                    if (code) {
+                        rankMap[code] = s.Rank;
+                        industryMap[code] = s['Industry Group'];
+                    }
+                });
+            }
+
+            const rows = results.map(res => {
+                const cleanTicker = res.ticker;
+                const rank = rankMap[cleanTicker] || '-';
+                let name = cleanTicker;
+                if (mappingsData) {
+                    Object.values(mappingsData.sector_company_map).forEach(companies => {
+                        if (companies[cleanTicker]) name = companies[cleanTicker];
+                    });
+                }
+
+                // Get general stats
+                const benchmarkKeys = Object.keys(res.benchmarks || {});
+                const firstBench = benchmarkKeys.length > 0 ? res.benchmarks[benchmarkKeys[0]] : null;
+                const stats = (firstBench && firstBench.stats) ? firstBench.stats : { count: 0, sum: 0, mean: 0, variance: 0, std_dev: 0 };
+
+                let industry = industryMap[cleanTicker] || 'N/A';
+                if (industry === 'N/A' && mappingsData) {
+                    Object.entries(mappingsData.sector_company_map).forEach(([sector, companies]) => {
+                        if (companies[cleanTicker]) industry = sector;
+                    });
+                }
+
+                // Collect dynamic benchmark values
+                const benchValues = activeBenchmarks.map(ticker => {
+                    const data = res.benchmarks[ticker];
+                    return {
+                        corr: data ? data.correlation.toFixed(2) : '0.00',
+                        beta: data ? data.beta.toFixed(2) : '0.00',
+                        isHigh: data && data.correlation > 0.7
+                    };
+                });
+
+                return {
+                    rank: rank === '-' ? 9999 : rank,
+                    displayRank: rank,
+                    name,
+                    industry,
+                    sum: (stats.sum || 0).toFixed(2),
+                    count: stats.count || 0,
+                    mean: (stats.mean || 0).toFixed(5),
+                    variance: (stats.variance || 0).toFixed(5),
+                    std_dev: (stats.std_dev || 0).toFixed(2),
+                    benchValues
+                };
+            });
+
+            rows.sort((a, b) => a.rank - b.rank);
+
+            // 4. Render Rows with Dynamic Columns
+            quantBody.innerHTML = rows.map(r => `
+                <tr class="hover:bg-cyan-500/5 transition-colors border-b border-white/[0.05]">
+                    <td class="py-4 pl-6 text-cyan-400 font-bold text-sm">${r.displayRank === '-' ? '-' : '#' + r.displayRank}</td>
+                    <td class="py-4 font-bold text-slate-200 text-sm whitespace-nowrap">${r.name}</td>
+                    <td class="py-4 text-center border-l border-white/5 font-mono text-[13px] font-bold text-slate-300">${r.sum}</td>
+                    <td class="py-4 text-center font-mono text-[13px] text-slate-400">${r.count}</td>
+                    <td class="py-4 text-center font-mono text-[13px] text-slate-400">${r.mean}</td>
+                    <td class="py-4 text-center font-mono text-[13px] text-slate-400">${r.variance}</td>
+                    <td class="py-4 text-center font-mono text-[13px] text-slate-400">${r.std_dev}</td>
+                    ${r.benchValues.map(bv => `
+                        <td class="py-4 text-center border-l border-white/5 font-mono text-[13px] ${bv.isHigh ? 'text-emerald-400 font-bold' : 'text-slate-300'}">${bv.corr}</td>
+                        <td class="py-4 text-center font-mono text-[13px] text-cyan-500/90 font-bold">${bv.beta}</td>
+                    `).join('')}
+                    <td class="py-4 pr-6 pl-4 text-[11px] text-slate-500 uppercase font-black border-l border-white/5">${r.industry}</td>
+                </tr>
+            `).join('');
+        }
+
+        function displayData(category) {
+            window.currentCategory = category;
+            let data = window.currentData[category];
+            if (!data) return;
+
+            data.sort((a, b) => (a.Rank || 9999) - (b.Rank || 9999));
+
+            const selectedIndustry = industryFilter.value;
+            if (selectedIndustry !== 'all') {
+                data = data.filter(item => (item['Industry Group'] || 'General') === selectedIndustry);
+            }
+
+            const totalRows = data.length;
+            const totalPages = Math.ceil(totalRows / window.rowsPerPage);
+            const start = (window.currentPage - 1) * window.rowsPerPage;
+            const paginatedData = data.slice(start, start + window.rowsPerPage);
+
+            rankingBody.innerHTML = paginatedData.map((item) => `
+                <tr class="hover:bg-cyan-500/[0.04] transition-all group cursor-pointer border-b border-white/[0.02]">
+                    <td class="py-3 pl-4 text-cyan-500/80 font-bold text-xs">#${item.Rank || item['Overall Rank'] || 'N/A'}</td>
+                    <td class="py-3">
+                        <div class="font-bold text-slate-200 group-hover:text-cyan-400 transition-colors">${item.Name}</div>
+                    </td>
+                    <td class="py-3 text-[11px] font-bold text-white uppercase">${item['Nse Code'] || 'N/A'}</td>
+                    <td class="py-3 text-[11px] text-slate-400 font-medium">${item['Industry Group'] || 'General'}</td>
+                    <td class="py-3 text-right text-xs font-mono text-cyan-400/80">₹${(parseFloat(item['Current Price']) || 0).toFixed(2)}</td>
+                    <td class="py-3 text-right text-xs font-mono text-slate-300">${(parseFloat(item['Return On Equity']) || 0).toFixed(2)}%</td>
+                    <td class="py-3 text-right text-xs font-mono text-slate-300">${(parseFloat(item['Return On Capital Employed']) || 0).toFixed(2)}%</td>
+                    <td class="py-3 pr-4 text-right font-mono text-xs text-slate-300 font-bold">₹${(parseFloat(item['Market Capitalization']) || 0).toFixed(2)} Cr</td>
+                </tr>
+            `).join('');
+
+            updatePaginationControls(totalPages);
+        }
+
+        function updatePaginationControls(totalPages) {
+            const container = document.getElementById('pagination-btns');
+            container.innerHTML = '';
+
+            const prev = createPageBtn('<', () => { if (window.currentPage > 1) { window.currentPage--; displayData(window.currentCategory); } });
+            container.appendChild(prev);
+
+            let startPage = Math.max(1, window.currentPage - 1);
+            let endPage = Math.min(totalPages, startPage + 2);
+            if (endPage - startPage < 2) startPage = Math.max(1, endPage - 2);
+
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = createPageBtn(i, () => {
+                    window.currentPage = i;
+                    displayData(window.currentCategory);
+                }, i === window.currentPage);
+                container.appendChild(btn);
+            }
+
+            const next = createPageBtn('>', () => { if (window.currentPage < totalPages) { window.currentPage++; displayData(window.currentCategory); } });
+            container.appendChild(next);
+        }
+
+        function createPageBtn(label, onclick, isActive = false) {
+            const btn = document.createElement('button');
+            btn.className = `w-8 h-8 rounded-lg flex items-center justify-center transition-all text-xs font-bold ${isActive ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' : 'bg-white/[0.02] text-slate-400 hover:bg-white/5'}`;
+            btn.textContent = label;
+            btn.onclick = onclick;
+            return btn;
+        }
+
+        // --- Portfolio Creator Logic ---
+        const totalCapitalInput = document.getElementById('total-capital');
+        const portfolioSlider = document.getElementById('portfolio-count-slider');
+        const portfolioCountDisplay = document.getElementById('portfolio-count-display');
+        const cardsContainer = document.getElementById('portfolio-cards-container');
+        const runPortfolioBtn = document.getElementById('run-portfolio-btn');
+        const portfolioResultsSection = document.getElementById('portfolio-results-section');
+
+        let portfolioConfigs = []; // Array of { id, allocation, capitalAmount, selectedAssets, customWeights }
+        let allocationMode = 'split'; // 'split' or 'individual'
+
+        const modeSplitBtn = document.getElementById('mode-split-btn');
+        const modeIndividualBtn = document.getElementById('mode-individual-btn');
+        const totalCapCont = document.getElementById('total-capital-container');
+
+        modeSplitBtn.onclick = () => setAllocationMode('split');
+        modeIndividualBtn.onclick = () => setAllocationMode('individual');
+
+        function setAllocationMode(mode) {
+            allocationMode = mode;
+            if (mode === 'split') {
+                modeSplitBtn.className = "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-cyan-500 text-white shadow-lg shadow-cyan-500/20";
+                modeIndividualBtn.className = "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-slate-500 hover:text-slate-300";
+                totalCapCont.classList.remove('hidden');
+            } else {
+                modeIndividualBtn.className = "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all bg-cyan-500 text-white shadow-lg shadow-cyan-500/20";
+                modeSplitBtn.className = "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-slate-500 hover:text-slate-300";
+                totalCapCont.classList.add('hidden');
+            }
+            updatePortfolioCards();
+        }
+
+        function syncAssetsToPortfolio() {
+            // 1. Ensure P1 exists
+            if (portfolioConfigs.length === 0) {
+                portfolioConfigs = [{ id: 1, allocation: 100, selectedAssets: new Set(), customWeights: "" }];
+            }
+            const p1 = portfolioConfigs[0];
+            const qAssets = selectedAssets; // Corrected local access
+
+            // 2. Priority: Quant Analysis Sync
+            if (qAssets && qAssets.size > 0) {
+                // If user picked something in Quant, it MUST overwrite P1
+                p1.selectedAssets = new Set(qAssets);
+            }
+            // 3. Fallback: Ranking Sync (Only if P1 is still empty after check)
+            else if (p1.selectedAssets.size === 0) {
+                if (window.currentData && window.currentData.all && window.currentData.all.length > 0) {
+                    window.currentData.all.slice(0, 5).forEach(s => {
+                        const ticker = s['Nse Code'] + ".NS";
+                        p1.selectedAssets.add(ticker);
+                    });
+                }
+            }
+        }
+
+        async function initPortfolioCreator() {
+            await loadMappings();
+            updatePortfolioCards();
+        }
+
+        portfolioSlider.oninput = () => {
+            portfolioCountDisplay.textContent = portfolioSlider.value;
+            updatePortfolioCards();
+        };
+
+        function updatePortfolioCards() {
+            const count = parseInt(portfolioSlider.value);
+            const currentConfigsMap = new Map(portfolioConfigs.map(p => [p.id, p]));
+            const totalCapInputVal = parseFloat(totalCapitalInput.value) || 0;
+
+            portfolioConfigs = [];
+            cardsContainer.innerHTML = '';
+
+            for (let i = 1; i <= count; i++) {
+                const existing = currentConfigsMap.get(i);
+                const config = existing || {
+                    id: i,
+                    allocation: (100 / count).toFixed(0),
+                    capitalAmount: 0,
+                    selectedAssets: new Set(),
+                    customWeights: ""
+                };
+
+                // Auto-rebalance percentages if in split mode and count changed
+                if (allocationMode === 'split' && count !== currentConfigsMap.size) {
+                    const avg = Math.floor(100 / count);
+                    const remainder = 100 % count;
+                    config.allocation = i === count ? (avg + remainder) : avg;
+                }
+
+                // If in individual mode and amount is 0, estimate from total
+                if (allocationMode === 'individual' && (config.capitalAmount === 0 || !existing)) {
+                    const total = parseFloat(totalCapInputVal) || 100000;
+                    config.capitalAmount = ((total * (config.allocation || 0)) / 100).toFixed(0);
+                }
+
+                portfolioConfigs.push(config);
+                renderPortfolioCard(config);
+            }
+        }
+
+        function renderPortfolioCard(config) {
+            const card = document.createElement('div');
+            card.className = "glass p-6 rounded-2xl border-t-4 border-cyan-500/50 flex flex-col gap-5 animate-in zoom-in-95 duration-300";
+
+            const allocLabel = allocationMode === 'split' ? 'Alloc:' : 'Capital:';
+            const allocUnit = allocationMode === 'split' ? '%' : '₹';
+            const allocValue = allocationMode === 'split' ? config.allocation : config.capitalAmount;
+            const inputClass = allocationMode === 'split' ? 'w-12' : 'w-24';
+
+            card.innerHTML = `
+                <div class="flex justify-between items-center bg-white/5 -mx-6 -mt-6 p-4 rounded-t-2xl">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-cyan-400">Portfolio P${config.id}</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase">${allocLabel}</span>
+                        ${allocationMode === 'individual' ? '<span class="text-cyan-400 text-xs font-bold">₹</span>' : ''}
+                        <input type="number" value="${allocValue}" class="card-alloc-input ${inputClass} bg-transparent text-white font-black text-right focus:outline-none" min="0">
+                        ${allocationMode === 'split' ? '<span class="text-cyan-400 text-xs font-bold">%</span>' : ''}
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Primary Assets (Stocks/Bonds)</label>
+                        <div class="dropdown-container" id="p-asset-dropdown-${config.id}">
+                            <button class="p-trigger w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:border-cyan-500 transition-all flex justify-between items-center group">
+                                <span class="truncate">Select Strategy Assets</span>
+                                <svg class="w-4 h-4 text-slate-500 group-hover:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round"></path></svg>
+                            </button>
+                            <div class="dropdown-list custom-scrollbar px-2 pb-2">
+                                <div class="dropdown-search"><input type="text" placeholder="Search..." class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] text-white"></div>
+                                <div class="p-asset-items"></div>
+                            </div>
+                        </div>
+                        <div class="p-selected-tags flex flex-wrap gap-1.5 mt-2"></div>
+                    </div>
+
+                    <div class="space-y-2">
+                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Custom Weights (Optional CSV)</label>
+                         <input type="text" value="${config.customWeights}" placeholder="e.g. 10, 30, 60" 
+                            class="card-weights-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs font-mono text-cyan-500 focus:outline-none focus:border-cyan-500 transition-all placeholder:text-slate-700">
+                    </div>
+                </div>
+            `;
+
+            cardsContainer.appendChild(card);
+
+            // Setup card logic
+            const trigger = card.querySelector('.p-trigger');
+            const list = card.querySelector('.dropdown-list');
+            const search = card.querySelector('.dropdown-search input');
+            const itemsCont = card.querySelector('.p-asset-items');
+            const allocInput = card.querySelector('.card-alloc-input');
+            const weightsInput = card.querySelector('.card-weights-input');
+
+            trigger.onclick = (e) => { e.stopPropagation(); closeAllDropdowns(); list.classList.add('show'); };
+            search.onclick = (e) => e.stopPropagation();
+            search.oninput = () => {
+                const term = search.value.toLowerCase();
+                itemsCont.querySelectorAll('.dropdown-item').forEach(i => i.style.display = i.textContent.toLowerCase().includes(term) ? 'flex' : 'none');
+            };
+
+            allocInput.onchange = () => {
+                if (allocationMode === 'split') {
+                    config.allocation = parseFloat(allocInput.value) || 0;
+                } else {
+                    config.capitalAmount = parseFloat(allocInput.value) || 0;
+                }
+            };
+            weightsInput.oninput = () => { config.customWeights = weightsInput.value; };
+
+            // Render assets in card
+            const renderAssets = () => {
+                itemsCont.innerHTML = '';
+                const qSelects = selectedAssets; // From Quant Tab
+                const hasQuantSelect = qSelects && qSelects.size > 0;
+
+                // Add Bonds (Always show or filter?)
+                const bondHeader = document.createElement('div');
+                bondHeader.className = 'px-3 py-1.5 text-[9px] font-bold text-slate-600 uppercase tracking-widest mt-2';
+                bondHeader.textContent = 'Liquid / Bonds / Gold';
+                itemsCont.appendChild(bondHeader);
+
+                Object.entries(mappingsData.bond_asset_options).forEach(([ticker, name]) => {
+                    // If user has quant selections, only show bonds if they are in that list?
+                    // Actually usually bonds are manual adds. Let's keep them always for now unless user clarifies.
+                    const item = document.createElement('div');
+                    item.className = `dropdown-item ${config.selectedAssets.has(ticker) ? 'selected' : ''}`;
+                    item.innerHTML = `<input type="checkbox" ${config.selectedAssets.has(ticker) ? 'checked' : ''} class="pointer-events-none"> <span class="text-[11px]">${name}</span>`;
+                    item.onclick = (e) => {
+                        e.stopPropagation();
+                        if (config.selectedAssets.has(ticker)) config.selectedAssets.delete(ticker);
+                        else config.selectedAssets.add(ticker);
+                        renderAssets();
+                        trigger.querySelector('span').textContent = config.selectedAssets.size > 0 ? `${config.selectedAssets.size} selected` : 'Select Assets';
+                    };
+                    itemsCont.appendChild(item);
+                });
+
+                // Update Selected Tags UI
+                const tagsCont = card.querySelector('.p-selected-tags');
+                if (tagsCont) {
+                    tagsCont.innerHTML = '';
+                    config.selectedAssets.forEach(ticker => {
+                        let name = ticker.replace('.NS', '');
+                        if (mappingsData.bond_asset_options[ticker]) {
+                            name = mappingsData.bond_asset_options[ticker];
+                        } else if (window.currentData && window.currentData.all) {
+                            const s = window.currentData.all.find(x => (x['Nse Code'] + ".NS") === ticker);
+                            if (s) name = s.Name.split(' ')[0];
+                        }
+
+                        const tag = document.createElement('div');
+                        tag.className = "flex items-center gap-1.5 px-2 py-0.5 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[9px] font-bold rounded uppercase animate-in fade-in zoom-in-90";
+                        tag.innerHTML = `
+                            <span>${name}</span>
+                            <span class="hover:text-white cursor-pointer ml-1 p-0.5" onclick="event.stopPropagation(); window.removeAssetFromConfig('${config.id}', '${ticker}')">✕</span>
+                        `;
+                        tagsCont.appendChild(tag);
+                    });
+                }
+
+                // Add Stocks
+                const stockHeader = document.createElement('div');
+                stockHeader.className = 'px-3 py-1.5 text-[9px] font-bold text-slate-600 uppercase tracking-widest mt-4';
+                stockHeader.textContent = hasQuantSelect ? 'Selected Quant Assets' : 'Active Ranking Stocks';
+                itemsCont.appendChild(stockHeader);
+
+                if (window.currentData && window.currentData.all) {
+                    let stocksToShow = window.currentData.all.slice(0, 100);
+                    if (hasQuantSelect) {
+                        stocksToShow = window.currentData.all.filter(s => qSelects.has(s['Nse Code'] + ".NS"));
+                    }
+
+                    // CRITICAL: Also ensure currently selected stocks that might NOT be in the quant list 
+                    // (e.g. manual adds) are also shown in the dropdown so they can be toggled.
+                    config.selectedAssets.forEach(ticker => {
+                        if (ticker.endsWith('.NS') && !mappingsData.bond_asset_options[ticker]) {
+                            const alreadyInList = stocksToShow.some(s => (s['Nse Code'] + ".NS") === ticker);
+                            if (!alreadyInList) {
+                                const fullData = window.currentData.all.find(s => (s['Nse Code'] + ".NS") === ticker);
+                                if (fullData) stocksToShow.push(fullData);
+                            }
+                        }
+                    });
+
+                    // Add Select All for Stocks
+                    if (stocksToShow.length > 0) {
+                        const selectAll = document.createElement('div');
+                        selectAll.className = 'dropdown-item font-bold text-cyan-400 border-b border-white/10 mb-1';
+                        const allSelected = stocksToShow.every(s => config.selectedAssets.has(s['Nse Code'] + ".NS"));
+                        selectAll.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg> ${allSelected ? 'Deselect All' : 'Select All Stocks'}`;
+                        selectAll.onclick = (e) => {
+                            e.stopPropagation();
+                            if (allSelected) stocksToShow.forEach(s => config.selectedAssets.delete(s['Nse Code'] + ".NS"));
+                            else stocksToShow.forEach(s => config.selectedAssets.add(s['Nse Code'] + ".NS"));
+                            renderAssets();
+                            trigger.querySelector('span').textContent = config.selectedAssets.size > 0 ? `${config.selectedAssets.size} selected` : 'Select Assets';
+                        };
+                        itemsCont.appendChild(selectAll);
+                    }
+
+                    stocksToShow.forEach(s => {
+                        const ticker = s['Nse Code'] + ".NS";
+                        const item = document.createElement('div');
+                        item.className = `dropdown-item ${config.selectedAssets.has(ticker) ? 'selected' : ''}`;
+                        item.innerHTML = `<input type="checkbox" ${config.selectedAssets.has(ticker) ? 'checked' : ''} class="pointer-events-none"> <span>${s.Name.slice(0, 30)}</span>`;
+                        item.onclick = (e) => {
+                            e.stopPropagation();
+                            if (config.selectedAssets.has(ticker)) config.selectedAssets.delete(ticker);
+                            else config.selectedAssets.add(ticker);
+                            renderAssets();
+                            trigger.querySelector('span').textContent = config.selectedAssets.size > 0 ? `${config.selectedAssets.size} selected` : 'Select Assets';
+                        };
+                        itemsCont.appendChild(item);
+                    });
+                }
+            };
+
+            // Global helper for (x) button
+            window.removeAssetFromConfig = (id, ticker) => {
+                const conf = portfolioConfigs.find(p => p.id == id);
+                if (conf) {
+                    conf.selectedAssets.delete(ticker);
+                    updatePortfolioCards(); // Refresh UI
+                }
+            };
+
+            renderAssets();
+        }
+
+        runPortfolioBtn.onclick = async () => {
+            let portfoliosToSend = [];
+            const totalCapInputVal = parseFloat(totalCapitalInput.value) || 0;
+
+            if (allocationMode === 'split') {
+                const totalAlloc = portfolioConfigs.reduce((sum, p) => sum + (parseFloat(p.allocation) || 0), 0);
+                if (Math.abs(totalAlloc - 100) > 0.1) {
+                    alert(`Total allocation must be 100%. Current: ${totalAlloc.toFixed(1)}%`);
+                    return;
+                }
+                portfoliosToSend = portfolioConfigs.map(p => {
+                    const tickers = Array.from(p.selectedAssets);
+                    let weights = null;
+                    if (p.customWeights && p.customWeights.trim()) {
+                        const wList = p.customWeights.split(',').map(s => parseFloat(s.trim())).map(n => isNaN(n) ? 0 : n);
+                        if (wList.length > 0) {
+                            weights = {};
+                            tickers.forEach((t, i) => {
+                                if (i < wList.length) weights[t] = wList[i];
+                                else weights[t] = 0;
+                            });
+                        }
+                    }
+                    return {
+                        name: `Portfolio P${p.id}`,
+                        tickers: tickers,
+                        allocation: parseFloat(p.allocation) || 0,
+                        custom_weights: weights
+                    };
+                });
+            } else {
+                // Individual mode
+                portfoliosToSend = portfolioConfigs.map(p => {
+                    const tickers = Array.from(p.selectedAssets);
+                    let weights = null;
+                    if (p.customWeights && p.customWeights.trim()) {
+                        const wList = p.customWeights.split(',').map(s => parseFloat(s.trim())).map(n => isNaN(n) ? 0 : n);
+                        if (wList.length > 0) {
+                            weights = {};
+                            tickers.forEach((t, i) => {
+                                if (i < wList.length) weights[t] = wList[i];
+                                else weights[t] = 0;
+                            });
+                        }
+                    }
+                    return {
+                        name: `Portfolio P${p.id}`,
+                        tickers: tickers,
+                        capital: parseFloat(p.capitalAmount) || 0,
+                        custom_weights: weights
+                    };
+                });
+                // Check if any capital is 0
+                if (portfoliosToSend.length > 0 && portfoliosToSend.some(p => p.capital <= 0)) {
+                    alert("Please enter a valid capital amount for all portfolios.");
+                    return;
+                }
+            }
+
+            if (portfolioConfigs.some(p => p.selectedAssets.size < 2)) {
+                alert("Each portfolio needs at least 2 assets.");
+                return;
+            }
+
+            runPortfolioBtn.disabled = true;
+            runPortfolioBtn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" stroke-width="4"></path></svg> COMPILING STRATEGIES...';
+            isAnalyzingPortfolio = true;
+
+            try {
+                const req = {
+                    total_capital: allocationMode === 'split' ? totalCapInputVal : portfoliosToSend.reduce((s, p) => s + p.capital, 0),
+                    start_date: document.getElementById('start-date').value || "2001-01-01",
+                    end_date: document.getElementById('end-date').value || new Date().toISOString().split('T')[0],
+                    portfolios: portfoliosToSend
+                };
+
+                const response = await fetch(API_BASE_URL + '/portfolio/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(req)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    const detail = typeof errorData.detail === 'object' ? JSON.stringify(errorData.detail, null, 2) : (errorData.detail || "Portfolio engine failed");
+                    throw new Error(detail);
+                }
+                const results = await response.json();
+                renderPortfolioResults(results);
+                portfolioResultsSection.classList.remove('hidden');
+            } catch (e) {
+                console.error(e);
+                const msg = e.message && typeof e.message === 'object' ? JSON.stringify(e.message, null, 2) : e.message;
+                alert("Analysis Error: " + msg);
+            } finally {
+                runPortfolioBtn.disabled = false;
+                runPortfolioBtn.innerHTML = 'BUILD ALL PORTFOLIOS';
+                isAnalyzingPortfolio = false;
+            }
+        };
+
+        let activeResultsData = null;
+        let selectedStrategies = {}; // {portfolioIndex: strategyKey}
+
+        function renderPortfolioResults(data) {
+            activeResultsData = data;
+
+            if (!data.portfolios || data.portfolios.length === 0) {
+                portfolioResultsSection.innerHTML = `
+                    <div class="glass p-10 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-center">
+                        <div class="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-width="2" stroke-linecap="round"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">No Analysis Results Found</h3>
+                        <p class="text-slate-400 text-sm max-w-md mx-auto mb-8">The portfolio engine couldn't process your request. This usually happens if the selected stocks don't have enough history for the chosen dates.</p>
+                        <div class="flex flex-wrap justify-center gap-4">
+                             <div class="bg-black/40 px-4 py-3 rounded-xl border border-white/5 text-left min-w-[200px]">
+                                <p class="text-[10px] font-bold text-cyan-400 uppercase mb-1">💡 Troubleshooting Tips</p>
+                                <ul class="text-[11px] text-slate-300 space-y-1 list-disc pl-4">
+                                    <li>Try extending the date range back further.</li>
+                                    <li>Remove assets that might be newly listed.</li>
+                                    <li>Check if the stocks are recognized (e.g. .NS suffix).</li>
+                                </ul>
+                             </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            portfolioResultsSection.innerHTML = `
+                <div class="mb-4 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Analysis & Execution Plan</h3>
+                        <p class="text-slate-500 text-xs mt-1">Total Capital Allocated: <span class="text-cyan-400 font-bold">₹${data.total_capital.toLocaleString()}</span></p>
+                    </div>
+                </div>
+            `;
+
+            data.portfolios.forEach((p, idx) => {
+                if (p.status === 'success') {
+                    if (!selectedStrategies[idx]) {
+                        selectedStrategies[idx] = p.strategies.max_sharpe ? 'max_sharpe' : 'equal_weight';
+                    }
+                }
+                const portfolioCard = renderPortfolioOutputCard(p, idx);
+                portfolioResultsSection.appendChild(portfolioCard);
+            });
+        }
+
+        function renderPortfolioOutputCard(p, portfolioIdx) {
+            const card = document.createElement('div');
+            card.className = "space-y-6 pt-6 border-t border-white/5";
+
+            if (p.status === 'error') {
+                card.innerHTML = `
+                    <div class="glass p-6 rounded-2xl border border-red-500/20 bg-red-500/5">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-xs font-black text-red-400">!</span>
+                            <h4 class="text-sm font-bold text-white">${p.name} - Analysis Failed</h4>
+                        </div>
+                        <p class="text-xs text-slate-400">${p.message || "Unknown error during analysis."}</p>
+                    </div>
+                `;
+                return card;
+            }
+
+            const selectedKey = selectedStrategies[portfolioIdx];
+            const stratConfig = {
+                "max_sharpe": { name: "Max Sharpe (Simulation)", icon: "zap" },
+                "min_volatility": { name: "Min Volatility (Simulation)", icon: "shield" },
+                "equal_weight": { name: "Equal Weight", icon: "trending-up" },
+                "random": { name: "Random Weights", icon: "refresh-cw" },
+                "custom": { name: "Custom", icon: "sliders" }
+            };
+
+            let stratHtml = '';
+            Object.entries(p.strategies).forEach(([key, res]) => {
+                const config = stratConfig[key] || { name: key, icon: 'activity' };
+                const isActive = key === selectedKey;
+                const activeBadge = isActive ? `<span class="px-2 py-1 bg-cyan-500/10 text-cyan-400 rounded text-[10px] uppercase font-black">ACTIVE STRATEGY</span>` : '';
+                const borderClass = isActive ? 'border-cyan-500/40 bg-cyan-500/5' : 'border-white/5 hover:border-cyan-500/20';
+
+                stratHtml += `
+                    <div onclick="selectStrategy(${portfolioIdx}, '${key}')" class="glass p-5 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-6 border ${borderClass} cursor-pointer transition-all">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-black uppercase text-slate-200">${config.name}</p>
+                                ${activeBadge}
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-8 text-right md:text-center">
+                            <div>
+                                <p class="text-[9px] font-bold text-slate-500 uppercase">Return</p>
+                                <p class="text-sm font-black text-emerald-400 font-mono">${(res.performance.expected_return * 100).toFixed(2)}%</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] font-bold text-slate-500 uppercase">Vol.</p>
+                                <p class="text-sm font-black text-slate-300 font-mono">${(res.performance.volatility * 100).toFixed(2)}%</p>
+                            </div>
+                            <div>
+                                <p class="text-[9px] font-bold text-slate-500 uppercase">Sharpe</p>
+                                <p class="text-sm font-black text-cyan-400 font-mono">${res.performance.sharpe_ratio.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const selectedStrat = p.strategies[selectedKey];
+            let tableRows = '';
+            if (selectedStrat && selectedStrat.weights) {
+                Object.entries(selectedStrat.weights).forEach(([ticker, weight]) => {
+                    const capital = p.capital * weight;
+                    tableRows += `
+                        <tr class="border-t border-white/[0.03]">
+                            <td class="py-3 px-6 font-bold text-slate-300 text-xs">${ticker}</td>
+                            <td class="py-3 text-center font-mono text-cyan-500/80 text-xs">${(weight * 100).toFixed(2)}%</td>
+                            <td class="py-3 text-right px-6 font-bold text-white font-mono text-xs">₹${capital.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tableRows = '<tr><td colspan="3" class="py-6 text-center text-slate-500 italic text-[10px]">No weights available for this strategy.</td></tr>';
+            }
+
+            card.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-full bg-cyan-500 flex items-center justify-center text-xs font-black text-black">Q</span>
+                        <h4 class="text-lg font-bold">${p.name} Portfolio Output</h4>
+                    </div>
+                    ${!selectedStrat ? '<div class="p-4 bg-amber-500/5 border border-amber-500/10 rounded-xl text-amber-400 text-[10px] text-center italic">Wait! This portfolio didn\'t yield results for any optimized strategies. Check your input assets.</div>' : ''}
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 ${!selectedStrat ? 'opacity-40 grayscale pointer-events-none' : ''}">
+                        <div class="lg:col-span-3 space-y-3">${stratHtml || '<p class="text-slate-500 text-xs italic">No optimized strategies found.</p>'}</div>
+                        <div class="lg:col-span-2">
+                             <div class="overflow-hidden rounded-2xl border border-white/5 bg-black/40 h-full">
+                                 <table class="w-full text-left">
+                                     <thead class="bg-white/5 text-[9px] font-black uppercase text-slate-500">
+                                        <tr>
+                                            <th class="py-3 px-6">Asset</th>
+                                            <th class="py-3 text-center">Weight</th>
+                                            <th class="py-3 text-right px-6">Capital</th>
+                                        </tr>
+                                     </thead>
+                                     <tbody>${tableRows}</tbody>
+                                 </table>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        window.selectStrategy = (portfolioIdx, strategyKey) => {
+            selectedStrategies[portfolioIdx] = strategyKey;
+            renderPortfolioResults(activeResultsData);
+        };
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-cyan-500', 'shadow-lg', 'shadow-cyan-500/20');
+                    b.classList.add('hover:bg-white/5', 'text-slate-400');
+                });
+                btn.classList.add('active', 'bg-cyan-500', 'shadow-lg', 'shadow-cyan-500/20');
+                btn.classList.remove('hover:bg-white/5', 'text-slate-400');
+
+                const category = btn.textContent.toLowerCase().replace(' cap', '').trim();
+                displayData(category);
+            }
+        });
+
+        // --- Excel Export Integration ---
+        async function downloadExcelBlob(endpoint, payload, filename, btn) {
+            const originalInner = btn.innerHTML;
+            btn.innerHTML = '<svg class="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" stroke-width="4"></path></svg>';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(API_BASE_URL + endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ detail: 'Export failed' }));
+                    throw new Error(err.detail || 'Server error during export');
+                }
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (e) {
+                alert("Download Error: " + e.message);
+            } finally {
+                btn.innerHTML = originalInner;
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('download-quant-excel').onclick = (e) => {
+            e.stopPropagation();
+            const assets = Array.from(selectedAssets);
+            const indices = Array.from(new Set([...selectedBenchmarks, '^NSEI', '^CRSLDX', '^NSEBANK']));
+            if (assets.length === 0) {
+                alert("Please select assets in the Quant tab first.");
+                return;
+            }
+
+            downloadExcelBlob('/export/quant', {
+                tickers: assets,
+                index_tickers: indices,
+                start_date: document.getElementById('start-date').value || null,
+                end_date: document.getElementById('end-date').value || null
+            }, `Quant_Analysis_${new Date().toISOString().split('T')[0]}.xlsx`, document.getElementById('download-quant-excel'));
+        };
+
+        document.getElementById('download-portfolio-excel').onclick = (e) => {
+            e.stopPropagation();
+            if (portfolioConfigs.length === 0 || portfolioConfigs.some(p => p.selectedAssets.size < 2)) {
+                alert("Each portfolio needs at least 2 assets to export.");
+                return;
+            }
+
+            const totalCapInputVal = parseFloat(totalCapitalInput.value) || 0;
+            const portfoliosToSend = portfolioConfigs.map(p => {
+                const tickers = Array.from(p.selectedAssets);
+                let weights = null;
+                if (p.customWeights && p.customWeights.trim()) {
+                    const wList = p.customWeights.split(',').map(s => parseFloat(s.trim())).map(n => isNaN(n) ? 0 : n);
+                    if (wList.length > 0) {
+                        weights = {};
+                        tickers.forEach((t, i) => { weights[t] = i < wList.length ? wList[i] : 0; });
+                    }
+                }
+                return {
+                    name: `Portfolio P${p.id}`,
+                    tickers: tickers,
+                    allocation: allocationMode === 'split' ? (parseFloat(p.allocation) || 0) : null,
+                    capital: allocationMode === 'individual' ? (parseFloat(p.capitalAmount) || 0) : null,
+                    custom_weights: weights
+                };
+            });
+
+            const req = {
+                total_capital: allocationMode === 'split' ? totalCapInputVal : portfoliosToSend.reduce((s, p) => s + (p.capital || 0), 0),
+                start_date: document.getElementById('start-date').value || "2001-01-01",
+                end_date: document.getElementById('end-date').value || new Date().toISOString().split('T')[0],
+                portfolios: portfoliosToSend
+            };
+
+            downloadExcelBlob('/export/portfolio', req, `Portfolio_Results_${new Date().toISOString().split('T')[0]}.xlsx`, document.getElementById('download-portfolio-excel'));
+        };
+    </script>
+</body>
+
+</html>
