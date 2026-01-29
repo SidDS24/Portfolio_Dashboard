@@ -304,47 +304,68 @@ async def analyze_portfolios(req: PortfolioAnalysisRequest):
 @app.post("/export/portfolio")
 async def export_portfolio_excel(req: PortfolioAnalysisRequest):
     """
-    Generates a professional Excel report for Portfolio Optimization results.
+    Generates a professional Excel report matching the user's requested format:
+    Horizontal comparison with Portfolio Type, Metrics, and Asset Weights.
     """
     try:
-        # Re-run the analysis logic (internal call for clean data)
+        # 1. Re-run the analysis logic
         analysis_res = await analyze_portfolios(req)
         portfolios = analysis_res.get("portfolios", [])
         
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             for p in portfolios:
+                if p.get("status") == "error": continue
+                
                 p_name = p["name"]
-                all_strat_data = []
+                # 2. Collect all unique tickers in THIS portfolio to create columns
+                all_tickers = []
+                for strat_res in p["strategies"].values():
+                    all_tickers.extend(strat_res["weights"].keys())
+                all_tickers = sorted(list(set(all_tickers)))
                 
-                for strat_name, strat_res in p["strategies"].items():
+                # 3. Build horizontal rows for each strategy
+                rows = []
+                for strat_id, strat_res in p["strategies"].items():
                     perf = strat_res["performance"]
-                    for ticker, weight in strat_res["weights"].items():
-                        all_strat_data.append({
-                            "Portfolio": p_name,
-                            "Strategy": strat_name.replace('_', ' ').title(),
-                            "Ticker": ticker,
-                            "Weight (%)": round(weight * 100, 2),
-                            "Allocation (₹)": round(p["capital"] * weight, 2),
-                            "Exp. Return (%)": round(perf["expected_return"] * 100, 2),
-                            "Volatility (%)": round(perf["volatility"] * 100, 2),
-                            "Sharpe Ratio": round(perf["sharpe_ratio"], 2)
-                        })
+                    weights = strat_res["weights"]
+                    
+                    # Core metadata and performance
+                    row = {
+                        "Portfolio Type": strat_id.replace('_', ' ').title(),
+                        "Expected Return (%)": round(perf["expected_return"] * 100, 2),
+                        "Std Deviation (%)": round(perf["volatility"] * 100, 2),
+                        "Sharpe Ratio": round(perf["sharpe_ratio"], 3)
+                    }
+                    
+                    # Add individual asset weights as columns
+                    for ticker in all_tickers:
+                        w = weights.get(ticker, 0)
+                        row[ticker] = f"{round(w * 100, 2)}%"
+                        
+                    rows.append(row)
                 
-                if all_strat_data:
-                    p_df = pd.DataFrame(all_strat_data)
+                if rows:
+                    p_df = pd.DataFrame(rows)
                     sheet_name = p_name[:31] # Excel limit
                     p_df.to_excel(writer, index=False, sheet_name=sheet_name)
                     
+                    # Professional Formatting
                     worksheet = writer.sheets[sheet_name]
+                    # Bold Headers
                     for cell in worksheet[1]:
                         cell.font = cell.font.copy(bold=True)
+                    
+                    # Adjust column widths automatically
+                    for i, col in enumerate(p_df.columns):
+                        max_len = max(p_df[col].astype(str).map(len).max(), len(col)) + 2
+                        worksheet.column_dimensions[chr(65+i)].width = max_len
             
         output.seek(0)
         return StreamingResponse(
             output,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": "attachment; filename=Portfolio_Strategy_Report.xlsx"}
+            headers={"Content-Disposition": f"attachment; filename=Portfolio_Strategy_Report_{req.total_capital}.xlsx"}
         )
     except Exception as e:
         import traceback
