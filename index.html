@@ -611,6 +611,17 @@
         setInterval(checkBackendStatus, 5000);
         checkBackendStatus();
 
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const processBtn = document.getElementById('process-btn');
+        const dbCount = document.getElementById('db-count');
+        const industryFilter = document.getElementById('industry-filter');
+        const runQuantBtn = document.getElementById('run-quant-btn');
+        const totalCapitalInput = document.getElementById('total-capital');
+        const runPortfolioBtn = document.getElementById('run-portfolio-btn');
+        const portfolioResultsSection = document.getElementById('portfolio-results-section');
+
         // Tab Logic
         const tabRankings = document.getElementById('tab-rankings');
         const tabQuant = document.getElementById('tab-quant');
@@ -1880,5 +1891,6 @@
         };
     </script>
 </body>
+
 
 </html>
