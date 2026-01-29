@@ -607,10 +607,7 @@
             }
         }
 
-        // Check every 5 seconds
-        setInterval(checkBackendStatus, 5000);
-        checkBackendStatus();
-
+        // Global UI Selectors
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const fileList = document.getElementById('file-list');
@@ -618,9 +615,28 @@
         const dbCount = document.getElementById('db-count');
         const industryFilter = document.getElementById('industry-filter');
         const runQuantBtn = document.getElementById('run-quant-btn');
+
+        // Portfolio Creator Logic Selectors
         const totalCapitalInput = document.getElementById('total-capital');
+        const portfolioSlider = document.getElementById('portfolio-count-slider');
+        const portfolioCountDisplay = document.getElementById('portfolio-count-display');
+        const cardsContainer = document.getElementById('portfolio-cards-container');
         const runPortfolioBtn = document.getElementById('run-portfolio-btn');
         const portfolioResultsSection = document.getElementById('portfolio-results-section');
+        const modeSplitBtn = document.getElementById('mode-split-btn');
+        const modeIndividualBtn = document.getElementById('mode-individual-btn');
+        const totalCapCont = document.getElementById('total-capital-container');
+
+        let isBackendOnline = false;
+        let isAnalyzingPortfolio = false;
+        let failCount = 0;
+        let selectedFiles = [];
+        let portfolioConfigs = []; // Array of { id, allocation, capitalAmount, selectedAssets, customWeights }
+        let allocationMode = 'split'; // 'split' or 'individual'
+
+        // Check every 5 seconds
+        setInterval(checkBackendStatus, 5000);
+        checkBackendStatus();
 
         // Tab Logic
         const tabRankings = document.getElementById('tab-rankings');
@@ -1235,20 +1251,7 @@
         }
 
         // --- Portfolio Creator Logic ---
-        const totalCapitalInput = document.getElementById('total-capital');
-        const portfolioSlider = document.getElementById('portfolio-count-slider');
-        const portfolioCountDisplay = document.getElementById('portfolio-count-display');
-        const cardsContainer = document.getElementById('portfolio-cards-container');
-        const runPortfolioBtn = document.getElementById('run-portfolio-btn');
-        const portfolioResultsSection = document.getElementById('portfolio-results-section');
-
-        let portfolioConfigs = []; // Array of { id, allocation, capitalAmount, selectedAssets, customWeights }
-        let allocationMode = 'split'; // 'split' or 'individual'
-
-        const modeSplitBtn = document.getElementById('mode-split-btn');
-        const modeIndividualBtn = document.getElementById('mode-individual-btn');
-        const totalCapCont = document.getElementById('total-capital-container');
-
+        // Set event listeners
         modeSplitBtn.onclick = () => setAllocationMode('split');
         modeIndividualBtn.onclick = () => setAllocationMode('individual');
 
@@ -1892,6 +1895,4 @@
     </script>
 </body>
 
-
 </html>
-
