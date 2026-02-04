@@ -1921,10 +1921,11 @@
             isAnalyzingPortfolio = true;
 
             try {
+                const isFormData = payload instanceof FormData;
                 const response = await fetch(API_BASE_URL + endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+                    body: isFormData ? payload : JSON.stringify(payload)
                 });
                 if (!response.ok) {
                     const err = await response.json().catch(() => ({ detail: 'Export failed' }));

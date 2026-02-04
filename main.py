@@ -92,18 +92,23 @@ async def export_rankings_excel(files: List[UploadFile] = File(...)):
         master_df = pd.concat(all_dfs, ignore_index=True)
         
         # Run the REAL math logic
-        all_ranks, _, _, _, _ = analytics_engine.calculate_company_rankings(master_df)
+        all_ranks, micro, small, mid, large = analytics_engine.calculate_company_rankings(master_df)
         
-        # Create Excel in memory
+        # Create Excel in memory with MULTIPLE sheets
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            all_ranks.to_excel(writer, index=False, sheet_name='Company Rankings')
+            all_ranks.to_excel(writer, index=False, sheet_name='All Rankings')
+            large.to_excel(writer, index=False, sheet_name='Large Cap')
+            mid.to_excel(writer, index=False, sheet_name='Mid Cap')
+            small.to_excel(writer, index=False, sheet_name='Small Cap')
+            micro.to_excel(writer, index=False, sheet_name='Micro Cap')
             
-            # Formatting (Bold headers)
-            worksheet = writer.sheets['Company Rankings']
-            for cell in worksheet[1]:
-                cell.font = cell.font.copy(bold=True)
-                
+            # Formatting (Bold headers for all sheets)
+            for sheet_name in writer.sheets:
+                worksheet = writer.sheets[sheet_name]
+                for cell in worksheet[1]:
+                    cell.font = cell.font.copy(bold=True)
+                    
         output.seek(0)
         return StreamingResponse(
             output,
