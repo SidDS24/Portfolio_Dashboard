@@ -320,7 +320,10 @@ async def export_portfolio_excel(req: PortfolioAnalysisRequest):
                 p_name = p["name"]
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 print(f"Generating Excel for portfolio: {p_name}")
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -370,6 +373,9 @@ async def export_portfolio_excel(req: PortfolioAnalysisRequest):
                         worksheet.column_dimensions[chr(65+i)].width = max_len
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
             
@@ -378,6 +384,7 @@ async def export_portfolio_excel(req: PortfolioAnalysisRequest):
             output,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={"Content-Disposition": f"attachment; filename=Portfolio_Strategy_Report_{req.total_capital}.xlsx"}
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
         )
 =======
@@ -388,6 +395,8 @@ async def export_portfolio_excel(req: PortfolioAnalysisRequest):
             output,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={"Content-Disposition": f"attachment; filename=Portfolio_Strategy_Report_{req.total_capital}.xlsx"}
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
         )
