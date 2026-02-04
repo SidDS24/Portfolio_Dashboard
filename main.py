@@ -74,6 +74,47 @@ async def get_rankings(files: List[UploadFile] = File(...)):
         "large": df_to_dict(large)
     }
 
+@app.post("/export/rankings")
+async def export_rankings_excel(files: List[UploadFile] = File(...)):
+    """
+    Generates an Excel report for Company Rankings.
+    """
+    try:
+        all_dfs = []
+        for file in files:
+            content = await file.read()
+            df = pd.read_csv(io.BytesIO(content))
+            all_dfs.append(df)
+        
+        if not all_dfs:
+            raise HTTPException(status_code=400, detail="No files uploaded")
+            
+        master_df = pd.concat(all_dfs, ignore_index=True)
+        
+        # Run the REAL math logic
+        all_ranks, _, _, _, _ = analytics_engine.calculate_company_rankings(master_df)
+        
+        # Create Excel in memory
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            all_ranks.to_excel(writer, index=False, sheet_name='Company Rankings')
+            
+            # Formatting (Bold headers)
+            worksheet = writer.sheets['Company Rankings']
+            for cell in worksheet[1]:
+                cell.font = cell.font.copy(bold=True)
+                
+        output.seek(0)
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=Company_Rankings.xlsx"}
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/mappings")
 async def get_mappings():
     try:
@@ -318,16 +359,6 @@ async def export_portfolio_excel(req: PortfolioAnalysisRequest):
                 if p.get("status") == "error": continue
                 
                 p_name = p["name"]
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-                print(f"Generating Excel for portfolio: {p_name}")
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                 # 2. Collect all unique tickers in THIS portfolio to create columns
                 all_tickers = []
                 for strat_res in p["strategies"].values():
@@ -371,34 +402,12 @@ async def export_portfolio_excel(req: PortfolioAnalysisRequest):
                     for i, col in enumerate(p_df.columns):
                         max_len = max(p_df[col].astype(str).map(len).max(), len(col)) + 2
                         worksheet.column_dimensions[chr(65+i)].width = max_len
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             
         output.seek(0)
         return StreamingResponse(
             output,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={"Content-Disposition": f"attachment; filename=Portfolio_Strategy_Report_{req.total_capital}.xlsx"}
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-        )
-=======
->>>>>>> Stashed changes
-            
-        output.seek(0)
-        return StreamingResponse(
-            output,
-            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f"attachment; filename=Portfolio_Strategy_Report_{req.total_capital}.xlsx"}
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         )
     except Exception as e:
         import traceback
